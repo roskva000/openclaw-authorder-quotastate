@@ -105,6 +105,8 @@
         if(data.lastExitCode === 0){
           await load();
           status.textContent = 'Güncellendi ✅';
+        }else if(data.lastExitCode === 75){
+          status.textContent = 'Başka bir collector zaten çalışıyor; mevcut çalışmanın bitmesini bekle.';
         }else if(typeof data.lastExitCode === 'number' && data.lastExitCode !== 0){
           status.textContent = 'Hata: collector başarısız oldu';
         }
