@@ -36,6 +36,13 @@ class Handler(SimpleHTTPRequestHandler):
         try:
             proc = subprocess.run(["/usr/bin/env", "bash", COLLECTOR], capture_output=True, text=True, timeout=240)
             if proc.returncode != 0:
+                if proc.returncode == 75:
+                    return self._json(409, {
+                        "ok": False,
+                        "error": "collector busy",
+                        "code": proc.returncode,
+                        "stderr": (proc.stderr or "")[-1200:],
+                    })
                 return self._json(500, {
                     "ok": False,
                     "error": "collector failed",

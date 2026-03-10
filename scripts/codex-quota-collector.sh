@@ -19,8 +19,8 @@ trap cleanup EXIT
 
 exec 9>"$LOCK_FILE"
 if ! flock -n 9; then
-  echo "collector: skip (another run active)" >&2
-  exit 0
+  echo "collector: busy (another run active)" >&2
+  exit 75
 fi
 
 if ! timeout "$REFRESH_TIMEOUT" bash "$ROOT_DIR/scripts/codex-quota-report.sh" --json > "$TMP"; then
@@ -28,5 +28,7 @@ if ! timeout "$REFRESH_TIMEOUT" bash "$ROOT_DIR/scripts/codex-quota-report.sh" -
   exit 1
 fi
 
+jq --arg collectedAt "$(date -Iseconds)" '.collectedAt=$collectedAt' "$TMP" > "$TMP.stamped"
+mv -f "$TMP.stamped" "$TMP"
 jq empty "$TMP" >/dev/null
 mv -f "$TMP" "$OUT"

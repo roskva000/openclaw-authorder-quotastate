@@ -63,7 +63,8 @@
       const meta = document.getElementById('meta');
       const status = document.getElementById('status');
 
-      meta.textContent = `Provider: ${data.provider} · Agent: ${data.agent} · Son güncelleme: ${new Date(data.generatedAt).toLocaleString('tr-TR',{hour12:false})}`;
+      const lastUpdate = data.collectedAt || data.generatedAt;
+      meta.textContent = `Provider: ${data.provider} · Agent: ${data.agent} · Son güncelleme: ${new Date(lastUpdate).toLocaleString('tr-TR',{hour12:false})}`;
       status.textContent = `Order: ${(data.originalOrder||[]).join(' -> ')}`;
 
       grid.innerHTML = (data.profiles||[]).map(p => `
@@ -82,7 +83,10 @@
       try{
         const res = await fetch('/api/refresh', { method:'POST' });
         const data = await res.json();
-        if(!res.ok || !data.ok) throw new Error(data.error || 'Refresh başarısız');
+        if(!res.ok || !data.ok){
+          if(res.status === 409) throw new Error('Başka bir yenileme çalışıyor, birkaç saniye sonra tekrar dene');
+          throw new Error(data.error || 'Refresh başarısız');
+        }
         await load();
         status.textContent = 'Güncellendi ✅';
       }catch(e){
